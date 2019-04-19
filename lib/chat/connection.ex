@@ -1,6 +1,8 @@
 defmodule Chat.Connection do
   require Logger
 
+  alias Chat.{ConnectionSupervisor, Message, Room}
+
   def accept(port) do
     {:ok, socket} =
       :gen_tcp.listen(
@@ -14,33 +16,26 @@ defmodule Chat.Connection do
 
   defp loop_acceptor(socket) do
     {:ok, client} = :gen_tcp.accept(socket)
-
-    {:ok, pid} =
-      Task.Supervisor.start_child(
-        Chat.ConnectionSupervisor,
-        fn -> connect(client) end
-      )
-
+    {:ok, pid} = Task.Supervisor.start_child(ConnectionSupervisor, fn -> connect(client) end)
     :ok = :gen_tcp.controlling_process(client, pid)
-
     loop_acceptor(socket)
   end
 
   def connect(socket) do
-    GenServer.cast(Chat.Room, {:connection, socket})
+    GenServer.cast(Room, {:connection, socket})
     serve(socket)
   end
 
   def serve(socket) do
     case read_line(socket) do
-      {:ok, message} ->
-        Logger.info("Received '#{inspect(message)}'")
-        message |> String.trim_trailing("\r\n") |> handle_message()
-        GenServer.cast(Chat.Room, {:message, message, socket})
+      {:ok, %Message{} = message} ->
+        Logger.info("Received '#{Message.format(message)}'")
+        handle_message(message)
+        GenServer.cast(Room, {:message, message, socket})
         serve(socket)
 
       {:error, :closed} ->
-        GenServer.cast(Chat.Room, {:disconnection, socket})
+        GenServer.cast(Room, {:disconnection, socket})
 
       {:error, :enotconn} ->
         Logger.warn("Tried to read from a closed socket.")
@@ -49,18 +44,19 @@ defmodule Chat.Connection do
 
   ### PRIVATE FUNCTIONS
 
-  defp handle_message("list_rooms") do
+  defp handle_message(%Message{text: "list_rooms"}) do
     Logger.info("I am listing rooms")
   end
 
-  defp handle_message("new_room " <> room_name) do
+  defp handle_message(%Message{text: "new_room " <> room_name}) do
     Logger.info("I am creating a new room called '#{room_name}'")
   end
 
   defp handle_message(other), do: :ignore
 
   defp read_line(socket) do
-    :gen_tcp.recv(socket, 0)
+    {:ok, text} = :gen_tcp.recv(socket, 0)
+    {:ok, %Message{text: String.trim_trailing(text, "\r\n"), timestamp: DateTime.utc_now()}}
   end
 
   defp write_line(socket, line) do
