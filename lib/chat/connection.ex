@@ -34,6 +34,8 @@ defmodule Chat.Connection do
   def serve(socket) do
     case read_line(socket) do
       {:ok, message} ->
+        Logger.info("Received '#{inspect(message)}'")
+        message |> String.trim_trailing("\r\n") |> handle_message()
         GenServer.cast(Chat.Room, {:message, message, socket})
         serve(socket)
 
@@ -44,6 +46,18 @@ defmodule Chat.Connection do
         Logger.warn("Tried to read from a closed socket.")
     end
   end
+
+  ### PRIVATE FUNCTIONS
+
+  defp handle_message("list_rooms") do
+    Logger.info("I am listing rooms")
+  end
+
+  defp handle_message("new_room " <> room_name) do
+    Logger.info("I am creating a new room called '#{room_name}'")
+  end
+
+  defp handle_message(other), do: :ignore
 
   defp read_line(socket) do
     :gen_tcp.recv(socket, 0)
