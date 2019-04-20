@@ -48,11 +48,15 @@ defmodule Chat.Connection do
     Logger.info("I am listing rooms")
   end
 
+  defp handle_message(%Message{text: "join_room " <> room_name}) do
+    Logger.info("I am joining the room called '#{room_name}'")
+  end
+
   defp handle_message(%Message{text: "new_room " <> room_name}) do
     Logger.info("I am creating a new room called '#{room_name}'")
   end
 
-  defp handle_message(other), do: :ignore
+  defp handle_message(_otherwise), do: :ignore
 
   defp read_line(socket) do
     {:ok, text} = :gen_tcp.recv(socket, 0)
