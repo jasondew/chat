@@ -1,6 +1,14 @@
 # Chat
 
-**TODO: Add description**
+In one terminal window, start up the server with
+```
+PORT=42019 iex -S mix
+```
+
+In another terminal window, start up the client with
+```
+iex -S mix client
+```
 
 ## Installation
 
