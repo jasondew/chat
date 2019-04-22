@@ -2,11 +2,12 @@ defmodule Chat.Client do
   require Logger
 
   @host "localhost"
-  @port 42019
 
   def run() do
+    port =
+      String.to_integer(System.get_env("PORT") || raise("missing $PORT environment variable"))
     Logger.info("I have started the client")
-    {:ok, socket} = :gen_tcp.connect(@host, @port, [{:active, true}])
+    {:ok, socket} = :gen_tcp.connect(@host, port, [{:active, true}])
     run(socket)
   end
 

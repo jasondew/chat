@@ -7,7 +7,7 @@ PORT=42019 iex -S mix
 
 In another terminal window, start up the client with
 ```
-iex -S mix client
+PORT=42019 iex -S mix client
 ```
 
 ## Installation
