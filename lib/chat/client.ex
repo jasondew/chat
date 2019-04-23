@@ -4,7 +4,12 @@ defmodule Chat.Client do
   @host 'localhost'
   @opts [:binary, active: false]
 
-  alias Chat.Message
+  @recognized_commands """
+?       Shows this list
+lr      Lists the current rooms
+nr foo  Creates a new room with the name 'foo'
+q       Quits the client
+"""
 
   def run() do
     port =
@@ -17,27 +22,28 @@ defmodule Chat.Client do
   ### PRIVATE FUNCTIONS
 
   defp execute_command("?", socket) do
-    IO.puts "TODO: recognized commands"
+    IO.puts(@recognized_commands)
     receive_command(socket)
   end
 
   defp execute_command("lr", socket) do
-    IO.puts "TODO: list rooms"
+    IO.puts("TODO: list rooms")
     write_line(socket, "list rooms")
     receive_command(socket)
   end
 
   defp execute_command("nr " <> room_name, socket) do
-    IO.puts "TODO: new room with name '#{room_name}'"
+    IO.puts("TODO: new room with name '#{room_name}'")
     write_line(socket, "new room " <> room_name)
     receive_command(socket)
   end
 
   defp execute_command("q", _socket) do
-    IO.puts "\nConnection lost"
+    System.halt()
   end
 
   defp execute_command(other, socket) do
+    IO.puts("I do not understand '#{other}'")
     receive_command(socket)
   end
 
