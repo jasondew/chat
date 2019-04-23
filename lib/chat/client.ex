@@ -14,7 +14,6 @@ q       Quits the client
   def run() do
     port =
       String.to_integer(System.get_env("PORT") || raise("missing $PORT environment variable"))
-    Logger.info("I have started the client")
     {:ok, socket} = :gen_tcp.connect(@host, port, @opts)
     receive_command(socket)
   end
