@@ -1,7 +1,13 @@
 # Chat
 
-Start the server with `Chat.Server.start` in an IEx window. Then, in another
-terminal window, start up the client with
+Start the server with
+
+```
+iex -S mix
+Chat.Server.start
+```
+
+Then, in another terminal window, start up the client with
 ```
 PORT=42019 iex -S mix client
 ```
