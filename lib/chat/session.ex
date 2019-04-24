@@ -3,31 +3,31 @@ defmodule Chat.Session do
   Handles the chat session with a single client.
   """
 
-  defstruct ~w[socket]a
+  defstruct ~w[socket room]a
 
   use GenServer
 
   require Logger
 
-  alias Chat.{Message, Person, Room}
+  alias Chat.{Message, Person}
 
-  def start_link(socket) do
-    GenServer.start_link(__MODULE__, socket)
+  def start_link({socket, room}) do
+    GenServer.start_link(__MODULE__, {socket, room})
   end
 
   @impl true
-  def init(socket) do
-    GenServer.cast(Room, {:connected, self()})
+  def init({socket, room}) do
+    GenServer.cast(room, {:connected, self()})
     accept_another_message(socket)
 
-    {:ok, %__MODULE__{socket: socket}}
+    {:ok, %__MODULE__{socket: socket, room: room}}
   end
 
   @impl true
   def handle_info({:tcp, socket, text}, state) do
     message = Message.new(text, Person.new())
 
-    :ok = GenServer.call(Room, {:message, message})
+    :ok = GenServer.call(state.room, {:message, message})
     handle_message(message)
     accept_another_message(socket)
 
@@ -36,7 +36,7 @@ defmodule Chat.Session do
 
   def handle_info({:tcp_closed, socket}, state) do
     Logger.info("Client disconnected: #{inspect(socket)}")
-    :ok = GenServer.call(Room, :disconnected)
+    :ok = GenServer.call(state.room, :disconnected)
 
     {:noreply, state}
   end

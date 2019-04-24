@@ -1,20 +1,21 @@
 defmodule Chat.Room do
-  defstruct sessions: MapSet.new(), messages: []
+  @enforce_keys ~w[id name]a
+  defstruct id: nil, name: nil, sessions: MapSet.new(), messages: []
 
   use GenServer
 
   require Logger
 
   alias Chat.Message
+  alias ExULID.ULID
 
-  def start_link(opts \\ []) do
-    opts = Keyword.put(opts, :name, __MODULE__)
-    GenServer.start_link(__MODULE__, :ok, opts)
+  def start_link(name) do
+    GenServer.start_link(__MODULE__, name)
   end
 
   @impl true
-  def init(:ok) do
-    {:ok, %__MODULE__{}}
+  def init(name) do
+    {:ok, %__MODULE__{id: ULID.generate(), name: name}}
   end
 
   @impl true
@@ -25,7 +26,7 @@ defmodule Chat.Room do
   @impl true
   def handle_cast({:connected, session}, state) do
     updated_state = %{state | sessions: MapSet.put(state.sessions, session)}
-    send_text(session, "Connected as #{inspect(session)}")
+    send_text(session, "Welcome to #{state.name}! You're connected as #{inspect(session)}.")
 
     {:noreply, updated_state}
   end

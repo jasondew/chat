@@ -8,8 +8,7 @@ defmodule Chat.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      Chat.Server,
-      Chat.Room
+      Chat.Server
       # Starts a worker by calling: Chat.Worker.start_link(arg)
       # {Chat.Worker, arg}
     ]
