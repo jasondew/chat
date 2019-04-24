@@ -6,6 +6,7 @@ defmodule Chat.Client do
 
   @recognized_commands """
 ?       Shows this list
+jr foo  Join the room with the name 'foo'
 lr      Lists the current rooms
 nr foo  Creates a new room with the name 'foo'
 q       Quits the client
@@ -25,6 +26,12 @@ q       Quits the client
     receive_command(socket)
   end
 
+  defp execute_command("jr " <> room_name, socket) do
+    IO.puts("TODO: join room with name '#{room_name}'")
+    write_line(socket, "join room " <> room_name)
+    receive_command(socket)
+  end
+
   defp execute_command("lr", socket) do
     IO.puts("TODO: list rooms")
     write_line(socket, "list rooms")
@@ -41,8 +48,8 @@ q       Quits the client
     System.halt()
   end
 
-  defp execute_command(other, socket) do
-    IO.puts("I do not understand '#{other}'")
+  defp execute_command(chat_message, socket) do
+    write_line(socket, chat_message)
     receive_command(socket)
   end
 
