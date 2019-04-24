@@ -1,65 +1,60 @@
 defmodule Chat.Room do
-  defstruct members: MapSet.new(), messages: []
+  defstruct sessions: MapSet.new(), messages: []
+
+  use GenServer
+
+  require Logger
 
   alias Chat.Message
 
-  require Logger
-  use GenServer
-
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, %__MODULE__{}, opts)
+    opts = Keyword.put(opts, :name, __MODULE__)
+    GenServer.start_link(__MODULE__, :ok, opts)
   end
 
   @impl true
-  def init(state) do
-    {:ok, state}
+  def init(:ok) do
+    {:ok, %__MODULE__{}}
   end
 
   @impl true
-  def handle_call(:debug, _from, state) do
+  def handle_info(:debug, state) do
     {:reply, state, state}
   end
 
   @impl true
-  def handle_cast({:connection, socket}, state) do
-    updated_state = %{state | members: MapSet.put(state.members, socket)}
-
-    Logger.info("Got a connection from #{inspect(socket)}.")
-    Logger.info("Current connections:")
-    Enum.each(updated_state.members, &Logger.info("  - #{inspect(&1)}"))
-
-    replay_history(state.messages, socket)
+  def handle_cast({:connected, session}, state) do
+    updated_state = %{state | sessions: MapSet.put(state.sessions, session)}
+    send_text(session, "Connected as #{inspect(session)}")
 
     {:noreply, updated_state}
   end
 
-  def handle_cast({:message, text, socket}, state) do
-    message = %Message{from: socket, text: text, timestamp: Time.utc_now()}
-    send_message_to_all_other_members(state.members, socket, message)
-
-    {:noreply, %{state | messages: [message | state.messages]}}
+  @impl true
+  def handle_call(:disconnected, {session, _reference}, state) do
+    {:reply, :ok, %{state | sessions: MapSet.delete(state.sessions, session)}}
   end
 
-  def handle_cast({:disconnection, socket}, state) do
-    {:noreply, %{state | members: MapSet.delete(state.members, socket)}}
+  def handle_call({:message, message}, {session, _reference}, state) do
+    send_message_to_all_other_sessions(state.sessions, session, message)
+
+    {:reply, :ok, %{state | messages: [message | state.messages]}}
   end
 
-  defp replay_history(messages, member) do
-    messages
-    |> Enum.reverse()
-    |> Enum.each(&send_message(&1, member))
-  end
-
-  defp send_message_to_all_other_members(members, excluded_member, message) do
-    members
-    |> Enum.each(fn member ->
-      if member != excluded_member do
-        send_message(message, member)
+  defp send_message_to_all_other_sessions(sessions, excluded_session, message) do
+    sessions
+    |> Enum.each(fn session ->
+      if session != excluded_session do
+        send_message(session, message)
       end
     end)
   end
 
-  defp send_message(message, member) do
-    :gen_tcp.send(member, Message.format(message))
+  defp send_text(session, text) do
+    send_message(session, Message.new(text))
+  end
+
+  defp send_message(session, message) do
+    GenServer.cast(session, {:send, message})
   end
 end

@@ -6,14 +6,10 @@ defmodule Chat.Application do
   use Application
 
   def start(_type, _args) do
-    port =
-      String.to_integer(System.get_env("PORT") || raise("missing $PORT environment variable"))
-
     # List all child processes to be supervised
     children = [
-      {Task.Supervisor, name: Chat.ConnectionSupervisor},
-      Supervisor.child_spec({Task, fn -> Chat.Connection.accept(port) end}, restart: :permanent),
-      {Chat.Room, name: Chat.Room}
+      Chat.Server,
+      Chat.Room
       # Starts a worker by calling: Chat.Worker.start_link(arg)
       # {Chat.Worker, arg}
     ]

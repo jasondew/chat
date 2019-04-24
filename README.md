@@ -1,11 +1,7 @@
 # Chat
 
-In one terminal window, start up the server with
-```
-PORT=42019 iex -S mix
-```
-
-In another terminal window, start up the client with
+Start the server with `Chat.Server.start` in an IEx window. Then, in another
+terminal window, start up the client with
 ```
 PORT=42019 iex -S mix client
 ```
@@ -26,4 +22,3 @@ end
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/chat](https://hexdocs.pm/chat).
-
