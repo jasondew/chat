@@ -9,6 +9,10 @@ defmodule Chat.Room do
   alias Chat.Message
   alias ExULID.ULID
 
+  def name(room) do
+    GenServer.call(room, :get_name)
+  end
+
   def start_link(name) do
     GenServer.start_link(__MODULE__, name)
   end
@@ -42,6 +46,10 @@ defmodule Chat.Room do
     {:reply, :ok, %{state | messages: [message | state.messages]}}
   end
 
+  def handle_call(:get_name, _from, state) do
+    {:reply, state.name, state}
+  end
+
   defp send_message_to_all_other_sessions(sessions, excluded_session, message) do
     sessions
     |> Enum.each(fn session ->
@@ -56,6 +64,6 @@ defmodule Chat.Room do
   end
 
   defp send_message(session, message) do
-    GenServer.cast(session, {:send, message})
+    GenServer.cast(session, {:send_message, message})
   end
 end

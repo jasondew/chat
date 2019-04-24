@@ -6,7 +6,7 @@ defmodule Chat.Server do
   alias Chat.{Room, Session}
 
   @default_port 42019
-  @default_room "#general"
+  @default_room_name "general"
 
   def start_link(opts \\ []) do
     opts = Keyword.put(opts, :name, __MODULE__)
@@ -26,7 +26,7 @@ defmodule Chat.Server do
         [:binary, packet: :line, active: false, reuseaddr: true]
       )
 
-    {:ok, default_room} = start_room(@default_room)
+    {:ok, default_room} = start_room(@default_room_name)
 
     Task.async(fn -> accept_connection(socket, default_room) end)
   end
@@ -36,12 +36,22 @@ defmodule Chat.Server do
   def start_room(name) do
     DynamicSupervisor.start_child(
       __MODULE__,
-      {Room, name}
+      {Room, "##{name}"}
     )
   end
 
   def rooms do
     children(Room)
+  end
+
+  def room_names() do
+    rooms()
+    |> Enum.map(fn room -> Room.name(room) end)
+  end
+
+  def find_room(name) do
+    rooms()
+    |> Enum.find(fn room -> Room.name(room) == name end)
   end
 
   ## SESSIONS
