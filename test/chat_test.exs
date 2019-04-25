@@ -51,9 +51,6 @@ defmodule ChatTest do
     disconnect(socket3)
 
     assert Server.room_names() == ~w[general random]
-
-    # session1 -> create room ->            send message
-    # session2 ->                join room               -> receive message
   end
 
   defp connect() do
@@ -75,6 +72,6 @@ defmodule ChatTest do
   end
 
   defp assert_no_new_messages(socket) do
-    {:error, :timeout} = :gen_tcp.recv(socket, 0, 100)
+    {:error, :timeout} = :gen_tcp.recv(socket, 0, 50)
   end
 end

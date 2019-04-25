@@ -10,7 +10,11 @@ defmodule Chat.Room do
   alias ExULID.ULID
 
   def name(room) do
-    GenServer.call(room, :get_name)
+    GenServer.cast(room, {:get_name, self()})
+
+    receive do
+      {:name, name} -> name
+    end
   end
 
   def start_link(name) do
@@ -30,7 +34,7 @@ defmodule Chat.Room do
   @impl true
   def handle_cast({:connected, session}, state) do
     updated_state = %{state | sessions: MapSet.put(state.sessions, session)}
-    send_text(session, "Welcome to ##{state.name}! You're connected as #{inspect(session)}.")
+    send_text(session, "Welcome to ##{state.name}!")
 
     {:noreply, updated_state}
   end
@@ -39,15 +43,16 @@ defmodule Chat.Room do
     {:noreply, %{state | sessions: MapSet.delete(state.sessions, session)}}
   end
 
-  @impl true
-  def handle_call({:message, message}, {session, _reference}, state) do
+  def handle_cast({:message, message, session}, state) do
     send_message_to_all_other_sessions(state.sessions, session, message)
 
-    {:reply, :ok, %{state | messages: [message | state.messages]}}
+    {:noreply, %{state | messages: [message | state.messages]}}
   end
 
-  def handle_call(:get_name, _from, state) do
-    {:reply, state.name, state}
+  @impl true
+  def handle_cast({:get_name, callback}, state) do
+    send(callback, {:name, state.name})
+    {:noreply, state}
   end
 
   defp send_message_to_all_other_sessions(sessions, excluded_session, message) do

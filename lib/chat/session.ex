@@ -3,7 +3,7 @@ defmodule Chat.Session do
   Handles the chat session with a single client.
   """
 
-  defstruct ~w[socket room]a
+  defstruct ~w[socket person room]a
 
   use GenServer
 
@@ -19,13 +19,14 @@ defmodule Chat.Session do
   def init({socket, room}) do
     GenServer.cast(room, {:connected, self()})
     accept_another_message(socket)
+    state = %__MODULE__{socket: socket, person: Person.new(), room: room}
 
-    {:ok, %__MODULE__{socket: socket, room: room}}
+    {:ok, state}
   end
 
   @impl true
   def handle_info({:tcp, socket, text}, state) do
-    message = Message.new(text, Person.new())
+    message = Message.new(text, state.person)
     updated_state = handle_message(message, state)
     accept_another_message(socket)
 
@@ -66,8 +67,18 @@ defmodule Chat.Session do
     state
   end
 
+  defp handle_message(%Message{text: "/alias " <> new_name}, state) do
+    send_to_socket(state.socket, "You are now known as #{new_name}.")
+    put_in(state.person.name, new_name)
+  end
+
   defp handle_message(%Message{text: "/whereami"}, state) do
     send_to_socket(state.socket, "You are in ##{Room.name(state.room)}.")
+    state
+  end
+
+  defp handle_message(%Message{text: "/whoami"}, state) do
+    send_to_socket(state.socket, "You are #{state.person.name}.")
     state
   end
 
@@ -88,7 +99,7 @@ defmodule Chat.Session do
   end
 
   defp handle_message(message, state) do
-    :ok = GenServer.call(state.room, {:message, message})
+    GenServer.cast(state.room, {:message, message, self()})
     state
   end
 
