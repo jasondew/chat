@@ -34,7 +34,7 @@ defmodule Chat.Session do
 
   def handle_info({:tcp_closed, socket}, state) do
     Logger.info("Client disconnected: #{inspect(socket)}")
-    :ok = GenServer.call(state.room, :disconnected)
+    GenServer.cast(state.room, {:disconnected, self()})
 
     {:noreply, state}
   end
@@ -67,12 +67,19 @@ defmodule Chat.Session do
   end
 
   defp handle_message(%Message{text: "/whereami"}, state) do
-    send_to_socket(state.socket, "You are in #{Room.name(state.room)}.")
+    send_to_socket(state.socket, "You are in ##{Room.name(state.room)}.")
     state
   end
 
   defp handle_message(%Message{text: "/join " <> room_name}, state) do
-    join_room(state, Server.find_room(room_name))
+    case Server.find_room(room_name) do
+      new_room when not is_nil(new_room) ->
+        join_room(state, new_room)
+
+      _ ->
+        send_to_socket(state.socket, "Error joining ##{inspect(room_name)}")
+        state
+    end
   end
 
   defp handle_message(%Message{text: "/create " <> room_name}, state) do
@@ -85,7 +92,8 @@ defmodule Chat.Session do
     state
   end
 
-  defp join_room(state, new_room) do
+  defp join_room(state, new_room) when not is_nil(new_room) do
+    GenServer.cast(state.room, {:disconnected, self()})
     GenServer.cast(new_room, {:connected, self()})
     Map.put(state, :room, new_room)
   end

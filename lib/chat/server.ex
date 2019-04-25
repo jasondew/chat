@@ -36,7 +36,7 @@ defmodule Chat.Server do
   def start_room(name) do
     DynamicSupervisor.start_child(
       __MODULE__,
-      {Room, "##{name}"}
+      {Room, name}
     )
   end
 

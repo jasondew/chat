@@ -9,7 +9,7 @@ defmodule Chat.Message do
   end
 
   def new(text, person) do
-    text = String.trim_trailing(text, "\r\n")
+    text = String.trim_trailing(text)
     %__MODULE__{id: ULID.generate(), text: text, from: person}
   end
 

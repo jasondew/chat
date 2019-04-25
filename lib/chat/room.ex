@@ -30,16 +30,16 @@ defmodule Chat.Room do
   @impl true
   def handle_cast({:connected, session}, state) do
     updated_state = %{state | sessions: MapSet.put(state.sessions, session)}
-    send_text(session, "Welcome to #{state.name}! You're connected as #{inspect(session)}.")
+    send_text(session, "Welcome to ##{state.name}! You're connected as #{inspect(session)}.")
 
     {:noreply, updated_state}
   end
 
-  @impl true
-  def handle_call(:disconnected, {session, _reference}, state) do
-    {:reply, :ok, %{state | sessions: MapSet.delete(state.sessions, session)}}
+  def handle_cast({:disconnected, session}, state) do
+    {:noreply, %{state | sessions: MapSet.delete(state.sessions, session)}}
   end
 
+  @impl true
   def handle_call({:message, message}, {session, _reference}, state) do
     send_message_to_all_other_sessions(state.sessions, session, message)
 
