@@ -17,7 +17,14 @@ defmodule Chat.Server do
   @impl true
   def init(:ok), do: DynamicSupervisor.init(strategy: :one_for_one)
 
-  def start(port \\ @default_port) do
+  def start() do
+    case System.get_env("PORT") do
+      nil -> start(@default_port)
+      port_string -> start(String.to_integer(port_string))
+    end
+  end
+
+  def start(port) when is_integer(port) and port > 0 do
     Logger.info("Accepting connections on port #{port}")
 
     {:ok, socket} =
@@ -28,7 +35,7 @@ defmodule Chat.Server do
 
     {:ok, default_room} = start_room(@default_room_name)
 
-    Task.async(fn -> accept_connection(socket, default_room) end)
+    accept_connection(socket, default_room)
   end
 
   ## ROOMS
