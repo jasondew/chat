@@ -12,7 +12,7 @@ defmodule Chat.Session do
   alias Chat.{Message, Person, Room, Server}
 
   def start_link({socket, room}) do
-    GenServer.start_link(__MODULE__, {socket, room})
+    GenServer.start_link(__MODULE__, {socket, room}, debug: [:trace])
   end
 
   @impl true

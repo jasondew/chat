@@ -5,16 +5,17 @@ defmodule Chat.Client do
   @opts [:binary, active: false]
 
   @recognized_commands """
-/?          Shows this list
-/create foo Creates a new room with the name 'foo'
-/join foo   Join the room with the name 'foo'
-/list_rooms Lists the current rooms
-/q          Quits the client
-"""
+  /?          Shows this list
+  /create foo Creates a new room with the name 'foo'
+  /join foo   Join the room with the name 'foo'
+  /list_rooms Lists the current rooms
+  /q          Quits the client
+  """
 
   def run() do
     port =
       String.to_integer(System.get_env("PORT") || raise("missing $PORT environment variable"))
+
     {:ok, socket} = :gen_tcp.connect(@host, port, @opts)
     receive_command(socket)
   end
@@ -62,6 +63,6 @@ defmodule Chat.Client do
   end
 
   defp write_line(socket, line) do
-    :gen_tcp.send(socket, line)
+    :gen_tcp.send(socket, line <> "\r\n")
   end
 end
