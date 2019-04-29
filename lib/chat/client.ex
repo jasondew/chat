@@ -28,19 +28,16 @@ defmodule Chat.Client do
   end
 
   defp execute_command("/join " <> room_name, socket) do
-    IO.puts("TODO: join room with name '#{room_name}'")
     write_line(socket, "/join " <> room_name)
     receive_command(socket)
   end
 
   defp execute_command("/list_rooms", socket) do
-    IO.puts("TODO: list rooms")
     write_line(socket, "/list_rooms")
     receive_command(socket)
   end
 
   defp execute_command("/create " <> room_name, socket) do
-    IO.puts("TODO: new room with name '#{room_name}'")
     write_line(socket, "/create " <> room_name)
     receive_command(socket)
   end
@@ -64,5 +61,7 @@ defmodule Chat.Client do
 
   defp write_line(socket, line) do
     :gen_tcp.send(socket, line <> "\r\n")
+    {:ok, response} = :gen_tcp.recv(socket, 0)
+    response |> String.trim() |> IO.puts()
   end
 end
